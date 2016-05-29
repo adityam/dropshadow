@@ -77,20 +77,10 @@
 \dropson
 % \dropsoff is needed as panic switch in case of a not existing/working IM installation
 
-%D Lua code
-\ctxloadluafile{t-drops}{}
-
-%D Module setup
 
 %D The default parameter values are stored on the Lua side.
-%\setupdrops % call at end of module (macro is still undefined)
 
 % Misc
-\unexpanded\def\dropsshowtable{\ctxlua{thirddata.drops.showdropstable()}}% show main parameters in a small table
-
-\newbox\Shadowbox
-\newbox\Pathbox
-
 % colors used for visual debugging
 \definecolor[dbg:shadowframe] [r=.933333,g=.388235,b=.388235] % red2
 \definecolor[dbg:objectframe] [g=.803922] % green3
@@ -99,18 +89,6 @@
 \def\dropshideframes{\def\DBG@frame{\v!off}}
 
 \dropshideframes
-
-\doifundefined{??module}{\def\??module{\??md:}} % hack for older versions
-\doifundefined{pdfvariable} {\let\pxdimen\pdfpxdimen} % \pxdimen in luatex 0.85
-
-%D Comma value lists
-
-\def\@@@@drops!commands{\c!background,\c!backgroundcolor,\c!colorspace,\c!direction,\c!file,\c!fileformat,\c!mppath,\c!offset,\c!pdistance,\c!penumbra,\c!psigma,\c!radius,\c!resolution,\c!rotation,\c!setup,\c!shadowbackgroundcolor,\c!shadowcolor,\c!udistance,\c!umbra,\c!usigma} % not \c!setup
-
-%D \macros
-%D   {}
-%D
-%D Internal helper macros
 
 \def\dropsparameter#1{\csname\????drops #1\endcsname}
 %D get default parameter values from one (lua based) source
@@ -123,8 +101,6 @@
 %D shadow ID; used internally for caching, but maybe useful, as it contains all graphic related parameters
 \def\currentshadowid{\ctxlua{thirddata.drops.currentshadowid()}}
 
-\unexpanded\def\numberofpixels#1{\the\numexpr\dimexpr#1\relax/\pxdimen\relax}
-
 \def\dropscreatedefaultpath#1#2#3{\ctxlua{context(thirddata.drops.createboxshadowpath(\!!bs#1\!!es,\!!bs#2\!!es,\!!bs#3\!!es))}}
 
 
@@ -134,146 +110,15 @@
 \let\dropsWidth\relax \newdimen\dropsWidth
 \let\dropsHeight\relax \newdimen\dropsHeight
 
-% D direction, offset, rotation
-\unexpanded\def\dropscalculateoffsets#1#2#3#4#5{\ctxlua{%
-  thirddata.drops.locateshadow("#1","#2","#3","#4","#5")}}% result in drops[X|Y]Pos register
-
-%D set local style
-%D
-%D the setup(s) define(s) a list of parameter=value pairs, which are then set
-%D as local variables for the ns prefix; a combination of styles is possible
-\unexpanded\def\SetLocalStyle#1#2{% ns prefix, style (can be commalist)
-%  \writestatus{drops}{SetLocalStyle: #1: style={#2}}%
-  \def\docommand##1{%
-    \doifsetupselse{##1}
-      {\setups[##1]%
-       \normalexpanded{\getparameters[#1][\STY@pl]}}%
-      {\showmessage{drops}{nosetup}{##1}}}%
-    \processcommacommand[#2]\docommand} % must be *command for multiple setups!
-
-%D the local style parameter list
-\let\STY@pl\empty
-%D define local style by defining the style parameter list
-\def\LocalStyle#1{\def\STY@pl{#1}}
-
-
-
-
-\unexpanded\def\drops
-  {\dodoubleempty\dodrops}
-
-\def\dodrops[#1][#2]#3% [drops] [framed] {content}
-  {\expanded{\copyparameters[\????drops][\????dropssetup][\@@@@drops!commands]}% use setup parameter as default
-   \iffirstargument % drops parameters
-       \getparameters[\????drops][#1]\fi
-   \ifsecondargument % framed parameters (mainly w+h, frame and background)
-       \getparameters[@@@@drops!][{\c!align={\vmiddle,\v!lohi},\c!offset=\v!overlay},#2]\fi
-   \iftrialtypesetting\framed[\c!offset=\v!overlay,\c!strut=\v!no,\c!frame=\v!off,#2]{#3}% framed parameters may influence final size
-   \else
-   \doifsomething{\dropsparameter\c!setup}
-     {\SetLocalStyle{\????drops}{\dropsparameter\c!setup}}% set all local variables, that are defined by the style
-%  TeX related parameters check (currently only emtpy parameter are captured)
-% TODO: use lua for a better check
-   \doifnothing{\dropsparameter\c!direction}{\setvalue{\????drops\c!direction}{\dropsdefault\c!direction}}%
-   \doifnothing{\dropsparameter\c!rotation}{\setvalue{\????drops\c!rotation}{\dropsdefault\c!rotation}}%
-   \doifnothing{\dropsparameter\c!offset}{\setvalue{\????drops\c!offset}{\dropsdefault\c!offset}}%
-   \doifnothing{\dropsparameter\c!radius}{\setvalue{\????drops\c!radius}{\dropsdefault\c!radius}}%
-   \doifnothing{\dropsparameter\c!psigma}{\setvalue{\????drops\c!psigma}{\dropsdefault\c!psigma}}%
-   \doifnothing{\dropsparameter\c!usigma}{\setvalue{\????drops\c!usigma}{\dropsdefault\c!usigma}}%
-   \doifnothing{\dropsparameter\c!resolution}{\setvalue{\????drops\c!resolution}{\dropsdefault\c!resolution}}%
-   \doifnothing{\dropsparameter\c!pdistance}{\setvalue{\????drops\c!pdistance}{\dropsdefault\c!pdistance}}%
-   \doifnothing{\dropsparameter\c!udistance}{\setvalue{\????drops\c!udistance}{\dropsdefault\c!udistance}}%
-%
-   \pxdimen1in\relax\divide\pxdimen\numexpr\dropsparameter\c!resolution\relax % set actual pixel dimension
-   \setbox\Shadowbox\vbox{#3}%
-   \expandafter\def\expandafter\@@@@drops!o \expandafter{\the\numexpr\dropsparameter\c!offset\relax}% no need to force (full) pixel here
-% D these parameters must be fully expanded before the lua call; all dimensions in full pixel only
-   \doifdefinedelse{@@@@drops!width}
-     {\dropsWidth\dimexpr\@@@@drops!width\relax
-       \expandafter\def\expandafter\@@@@drops!w \expandafter{\numberofpixels{\dimexpr\@@@@drops!width\relax}}}% width given by \framed
-     {\dropsWidth\wd\Shadowbox\relax
-      \expandafter\def\expandafter\@@@@drops!w \expandafter{\numberofpixels{\wd\Shadowbox}}}%
-   \doifdefinedelse{@@@@drops!height}
-     {\dropsHeight\dimexpr\@@@@drops!height\relax
-       \expandafter\def\expandafter\@@@@drops!h \expandafter{\numberofpixels{\dimexpr\@@@@drops!height\relax}}}% height given by \framed
-     {\dropsHeight\dimexpr\ht\Shadowbox+\dp\Shadowbox\relax
-      \expandafter\def\expandafter\@@@@drops!h \expandafter{\numberofpixels{\dimexpr\ht\Shadowbox+\dp\Shadowbox\relax}}}%
-   \doifdefinedelse{@@@@drops!backgroundradius}
-     {\dropsRadius\dimexpr\@@@@drops!backgroundradius\relax
-      \expandafter\def\expandafter\@@@@drops!r \expandafter{\numberofpixels{\dimexpr\@@@@drops!backgroundradius\relax}}}%
-     {\dropsRadius\dimexpr\dropsparameter\c!radius\relax
-      \expandafter\def\expandafter\@@@@drops!r \expandafter{\numberofpixels{\dimexpr\dropsparameter\c!radius\relax}}}%
-   \expandafter\def\expandafter\@@@@drops!psigma \expandafter{\numberofpixels{\dimexpr\dropsparameter\c!psigma\relax}}%
-   \expandafter\def\expandafter\@@@@drops!usigma \expandafter{\numberofpixels{\dimexpr\dropsparameter\c!usigma\relax}}%
-   \expandafter\def\expandafter\@@@@drops!pdistance \expandafter{\numberofpixels{\dimexpr\dropsparameter\c!pdistance\relax}}%
-   \expandafter\def\expandafter\@@@@drops!udistance \expandafter{\numberofpixels{\dimexpr\dropsparameter\c!udistance\relax}}%
-   \doifnothing{\dropsparameter\c!mppath}% then create a path using the default graphic template
-     {\setbox\Pathbox\hbox{\dropscreatedefaultpath{\the\numexpr\dropsWidth}{\the\numexpr\dropsHeight}{\the\numexpr\dropsRadius}}}%
-%
-   \setuplayer[\@@@@drops!layer]
-      [\c!corner=\v!middle,\c!location=\v!middle, % center based placement
-       \c!height=\@@@@drops!h px, % always use 'px', as we deal with pixels here
-       \c!width=\@@@@drops!w px,
-      ]%
-   \if!!dropson
-   \dropscalculateoffsets{\dropsparameter\c!direction}{\the\numexpr\dropsparameter\c!offset}{\dropsparameter\c!rotation}{\dropscurrent{shiftx}}{\dropscurrent{shifty}}%
-   % also store some of the graphic independant parameters to make testing easier; all graphic related parameters are stored at the lua end
-   \startluacode
-   local c = thirddata.drops.parameters.current
-   c.offset    = \!!bs\@@@@drops!o\!!es
-   c.xoffset   = \!!bs\the\numexpr\dropsXPos\!!es
-   c.yoffset   = \!!bs\the\numexpr\dropsYPos\!!es
-   c.direction = \!!bs\dropsparameter\c!direction\!!es
-   c.rotation  = \!!bs\dropsparameter\c!rotation\!!es
-   c.setup     = \!!bs\dropsparameter\c!setup\!!es
-
-   local spec = {
-       width = "\the\numexpr\dropsWidth",
-       height = "\the\numexpr\dropsHeight",
-       radius = "\the\numexpr\dropsRadius",
-       psigma = "\@@@@drops!psigma",
-       usigma = "\@@@@drops!usigma",
-       umbra = \!!bs\dropsparameter\c!umbra\!!es,
-       penumbra = \!!bs\dropsparameter\c!penumbra\!!es,
-       resolution = \!!bs\dropsparameter\c!resolution\!!es,
-       fileformat = \!!bs\dropsparameter\c!fileformat\!!es,
-       colorspace = \!!bs\dropsparameter\c!colorspace\!!es,
-       shadowcolor = \!!bs\dropsparameter\c!shadowcolor\!!es,
-       shadowbackgroundcolor = \!!bs\dropsparameter\c!shadowbackgroundcolor\!!es,
-       mppath= \!!bs\dropsparameter\c!mppath\!!es,
-       pdistance = "\@@@@drops!pdistance",
-       udistance = "\@@@@drops!udistance",
-   }
-   if thirddata.drops.im_version ~= IM_NO_VERSIONNUMBER then thirddata.drops.shadow(spec) end
-   \stopluacode
-   \setlayerframed[\@@@@drops!layer][hoffset=\dropsXPos,voffset=\dropsYPos]
-      [\c!offset=\v!overlay,\c!strut=no,
-       \c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:shadowframe]%
-      {\externalfigure[{\currentshadowname}]}%
-   \fi % dropson
-   \setlayerframed[\@@@@drops!layer][]
-      [\c!width=\@@@@drops!w px,
-       \c!height=\@@@@drops!h px,
-       \c!radius=\@@@@drops!r px,
-       \c!backgroundradius=\@@@@drops!r px,
-       \c!frameradius=\@@@@drops!r px,
-       \c!corner=\ifdim\dimexpr\@@@@drops!r px\relax>\zeropoint \v!round\else\v!rectangular\fi,
-       \c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:objectframe,
-       \c!backgroundcolor=\dropsparameter\c!backgroundcolor,
-       \c!background=\dropsparameter\c!background,
-       \c!offset=\v!overlay,\c!align={\v!middle,\v!lohi}, % needed for background color
-       #2]{#3}%
-   \tightlayer[\@@@@drops!layer]%
-   \fi % trialtypesetting
-  }
-
-
 \unexpanded\def\!!dropscontrol
   {\if!!dropsdo\ctxlua{thirddata.drops.batch_control()}\fi}
 
 \appendtoks\!!dropscontrol\to\everybye
 
 % ---------- Modified module
+
+%D Lua code
+\ctxloadluafile{t-dropshadow}{}
 
 \definenamespace
   [dropshadow]
@@ -330,10 +175,9 @@
       {\setexpandeddropshadowparameter\c!width{\the\wd\b_dropshadow}}
   \doifnothing{\dropshadowparameter\c!height}
       {\setexpandeddropshadowparameter\c!height{\the\dimexpr\ht\b_dropshadow+\dp\b_dropshadow\relax}}
-  %TODO: Fix mppath
   \doifnothing{\dropsparameter\c!mppath}
       % create a path using the default graphic template
-     {\setbox\Pathbox\hbox{\dropscreatedefaultpath{\the\numexpr\dropsWidth}{\the\numexpr\dropsHeight}{\the\numexpr\dropsRadius}}}%
+     {\setbox\scratchbox\hbox{\dropscreatedefaultpath{\the\numexpr\dropshadowparameter\c!width}{\the\numexpr\dropshadowparameter\c!height}{\the\numexpr\dropshadowparameter\c!radius}}}%
 
   \setuplayer[\????dropshadow:layer]
              [
@@ -416,39 +260,11 @@
         }
      \egroup}
 
-\unexpanded\def\usedropshadowA#name%
-  {\drops
-    [
-            \c!background=\nameddropshadowparameter{#name}\c!background,
-       \c!backgroundcolor=\nameddropshadowparameter{#name}\c!backgroundcolor,
-            \c!colorspace=\nameddropshadowparameter{#name}\c!colorspace,
-             \c!direction=\nameddropshadowparameter{#name}\c!direction,
-            \c!fileformat=\nameddropshadowparameter{#name}\c!fileformat,
-                \c!mppath=\nameddropshadowparameter{#name}\c!mppath,
-                \c!offset=\nameddropshadowparameter{#name}\c!offset,
-             \c!pdistance=\nameddropshadowparameter{#name}\c!pdistance,
-              \c!penumbra=\nameddropshadowparameter{#name}\c!penumbra,
-                \c!psigma=\nameddropshadowparameter{#name}\c!psigma,
-                \c!radius=\nameddropshadowparameter{#name}\c!radius,
-            \c!resolution=\nameddropshadowparameter{#name}\c!resolution,
-              \c!rotation=\nameddropshadowparameter{#name}\c!rotation,
-                 \c!setup=\nameddropshadowparameter{#name}\c!setup,
-                 \c!state=\nameddropshadowparameter{#name}\c!state,
- \c!shadowbackgroundcolor=\nameddropshadowparameter{#name}\c!shadowbackgroundcolor,
-           \c!shadowcolor=\nameddropshadowparameter{#name}\c!shadowcolor,
-             \c!udistance=\nameddropshadowparameter{#name}\c!udistance,
-                 \c!umbra=\nameddropshadowparameter{#name}\c!umbra,
-                \c!usigma=\nameddropshadowparameter{#name}\c!usigma,
-    ]
-    [
-       \c!width=\overlaywidth,
-      \c!height=\overlayheight,
-       \c!empty=\v!yes,
-    ]{}}
-
 \appendtoks
   \expanded{\defineoverlay[\currentdropshadow][\usedropshadow{\currentdropshadow}{}]}
 \to \everydefinedropshadow
+
+\unexpanded\def\showdropshadowtable{\ctxlua{thirddata.drops.showdropstable()}}% show main parameters in a small table
 
 % D load some presets
 % \usemodule[t-drops-setups]
