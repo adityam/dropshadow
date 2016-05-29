@@ -1,4 +1,4 @@
-if not modules then modules = { } end modules ['t-drops'] = {
+if not modules then modules = { } end modules ['t-dropshadow'] = {
     version   = 1.000,
     comment   = "Drop shadows",
     author    = "Peter Rolf",
@@ -22,10 +22,10 @@ local abs, floor, max, min, pow, sqrt = math.abs, math.floor, math.max, math.min
 local rad, cos, sin = math.rad, math.cos, math.sin
 
 
-local trace_drops = false  trackers.register("modules.drops", function(v) trace_drops = v end)
+local trace_drops = false  trackers.register("modules.dropshadow", function(v) trace_drops = v end)
 -- tracker for path calculation (talkative!)
-local trace_drops_path = false trackers.register("modules.drops.path", function(v) trace_drops_path = v end)
-local report_drops = logs.new("drops")
+local trace_drops_path = false trackers.register("modules.dropshadow.path", function(v) trace_drops_path = v end)
+local report_drops = logs.new("dropshadow")
 
 thirddata       = thirddata       or { }
 thirddata.drops = thirddata.drops or { }
