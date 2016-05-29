@@ -426,7 +426,7 @@ function drops.locateshadow(angle,offset,rotation,shiftx,shifty)
     sx = tonumber(shiftx)*65536
     sy = tonumber(shifty)*65536
     x,y = cos(a)*o+sx, sin(a)*o-sy
-    texdimen.dropsXPos, texdimen.dropsYPos = x,-y -- write result into register
+    texdimen.d_dropshadow_x, texdimen.d_dropshadow_y = x,-y -- write result into register
 end
 
 

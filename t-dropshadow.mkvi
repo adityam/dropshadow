@@ -47,12 +47,6 @@
   \setinterfacemessage\m!drops {wrongumbra}      {warning: invalid umbra value '--'; setting to default value}
 \stopinterface
 
-
-%D Namespaces
-
-\def\????drops{@@@@drops}
-\def\????dropssetup{@@@@dropssetup}
-
 %D Boolean
 
 \newif\if!!dropsdo
@@ -90,12 +84,6 @@
 
 \dropshideframes
 
-\def\dropsparameter#1{\csname\????drops #1\endcsname}
-%D get default parameter values from one (lua based) source
-\def\dropsdefault#1{\ctxlua{context(thirddata.drops.getdefault("#1"))}}
-%D get current parameter values
-\def\dropscurrent#1{\ctxlua{context(thirddata.drops.getcurrent("#1"))}}
-
 %D relative path / file name
 \def\currentshadowname{\ctxlua{thirddata.drops.currentshadowname()}}
 %D shadow ID; used internally for caching, but maybe useful, as it contains all graphic related parameters
@@ -103,12 +91,6 @@
 
 \def\dropscreatedefaultpath#1#2#3{\ctxlua{context(thirddata.drops.createboxshadowpath(\!!bs#1\!!es,\!!bs#2\!!es,\!!bs#3\!!es))}}
 
-
-\let\dropsXPos\relax \newdimen\dropsXPos
-\let\dropsYPos\relax \newdimen\dropsYPos
-\let\dropsRadius\relax \newdimen\dropsRadius
-\let\dropsWidth\relax \newdimen\dropsWidth
-\let\dropsHeight\relax \newdimen\dropsHeight
 
 \unexpanded\def\!!dropscontrol
   {\if!!dropsdo\ctxlua{thirddata.drops.batch_control()}\fi}
@@ -165,6 +147,8 @@
 \def\dropshadowdimension#1{\the\dimexpr\dropshadowparameter{#1}\relax}
 
 \newbox\b_dropshadow
+\newdimen\d_dropshadow_x
+\newdimen\d_dropshadow_y
 
 \definelayer[\????dropshadow:layer]
 
@@ -175,7 +159,7 @@
       {\setexpandeddropshadowparameter\c!width{\the\wd\b_dropshadow}}
   \doifnothing{\dropshadowparameter\c!height}
       {\setexpandeddropshadowparameter\c!height{\the\dimexpr\ht\b_dropshadow+\dp\b_dropshadow\relax}}
-  \doifnothing{\dropsparameter\c!mppath}
+  \doifnothing{\dropshadowparameter\c!mppath}
       % create a path using the default graphic template
      {\setbox\scratchbox\hbox{\dropscreatedefaultpath{\the\numexpr\dropshadowparameter\c!width}{\the\numexpr\dropshadowparameter\c!height}{\the\numexpr\dropshadowparameter\c!radius}}}%
 
@@ -199,8 +183,8 @@
   {\startluacode
      local c = thirddata.drops.parameters.current
      c.offset    = \!!bs\dropshadowpixels\c!offset\!!es
-     c.xoffset   = \!!bs\the\numexpr\dropsXPos\!!es
-     c.yoffset   = \!!bs\the\numexpr\dropsYPos\!!es
+     c.xoffset   = \!!bs\the\numexpr\d_dropshadow_x\!!es
+     c.yoffset   = \!!bs\the\numexpr\d_dropshadow_y\!!es
      c.direction = \!!bs\dropshadowparameter\c!direction\!!es
      c.rotation  = \!!bs\dropshadowparameter\c!rotation\!!es
      c.setup     = \!!bs\dropshadowparameter\c!setup\!!es
@@ -228,7 +212,7 @@
   \stopluacode
    \setlayerframed
      [\????dropshadow:layer]
-     [hoffset=\dropsXPos,voffset=\dropsYPos]
+     [\c!hoffset=\d_dropshadow_x, \c!voffset=\d_dropshadow_y]
      [\c!offset=\v!overlay,\c!strut=no,\c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:shadowframe]%
       {\externalfigure[{\currentshadowname}]}}
   
