@@ -54,7 +54,7 @@
 
 %D Tracing & Control
 %D
-%D add '--trackers=modules.drops' to your command line, to get additional info
+%D add '--trackers=modules.dropshadow' to your command line, to get additional info
 
 % D create new shadows if neeeded
 \let\dropsdo\!!dropsdotrue
@@ -62,15 +62,6 @@
 \let\dropsdone\!!dropsdofalse
 
 \dropsdo
-
-% D normal usage
-\let\dropson\!!dropsontrue
-% D no shadow inclusion, no shadow creation
-\let\dropsoff\!!dropsonfalse
-
-\dropson
-% \dropsoff is needed as panic switch in case of a not existing/working IM installation
-
 
 %D The default parameter values are stored on the Lua side.
 
@@ -143,12 +134,30 @@
   ]
 
 % Helper macros
+\def\numberofpixels#1{\the\numexpr\dimexpr#1\relax/\pxdimen\relax}
 \def\dropshadowpixels#1{\the\numexpr\dimexpr\dropshadowparameter{#1}\relax/\pxdimen\relax}
 \def\dropshadowdimension#1{\the\dimexpr\dropshadowparameter{#1}\relax}
 
 \newbox\b_dropshadow
 \newdimen\d_dropshadow_x
 \newdimen\d_dropshadow_y
+\let\p_dropshadow_wd\relax
+\let\p_dropshadow_ht\relax
+
+\defineframed
+  [inheriteddropshadowframed]
+  [
+    \c!frame=\v!on,
+    \c!width=\dropshadowparameter\c!width,
+    \c!height=\dropshadowparameter\c!height,
+    \c!radius=\dropshadowpixels\c!radius px,
+    \c!corner=\v!round, %\ifdimen\dropshadowpixels\c!radius px\relax>\zeropoint \v!round\else\v!rectangular\fi,
+    \c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:objectframe,
+    \c!backgroundcolor=\dropshadowparameter\c!backgroundcolor,
+    \c!background=\dropshadowparameter\c!background,
+    \c!offset=\v!overlay,\c!align={\v!middle,\v!lohi}, % needed for background color
+  ]
+
 
 \definelayer[\????dropshadow:layer]
 
@@ -159,6 +168,8 @@
       {\setexpandeddropshadowparameter\c!width{\the\wd\b_dropshadow}}
   \doifnothing{\dropshadowparameter\c!height}
       {\setexpandeddropshadowparameter\c!height{\the\dimexpr\ht\b_dropshadow+\dp\b_dropshadow\relax}}
+  \edef\p_dropshadow_wd{\numberofpixels{\the\wd\b_dropshadow}}
+  \edef\p_dropshadow_ht{\numberofpixels{\the\ht\b_dropshadow}}
   \doifnothing{\dropshadowparameter\c!mppath}
       % create a path using the default graphic template
      {\setbox\scratchbox\hbox{\dropscreatedefaultpath{\the\numexpr\dropshadowparameter\c!width}{\the\numexpr\dropshadowparameter\c!height}{\the\numexpr\dropshadowparameter\c!radius}}}%
@@ -167,8 +178,8 @@
              [
                \c!corner=\v!middle,
                \c!location=\v!middle,
-               \c!height=\dropshadowpixels\c!height px,
-               \c!width=\dropshadowpixels\c!width px,
+               \c!height=\p_dropshadow_ht px,
+               \c!width=\p_dropshadow_wd px,
              ]
 \stoptexdefinition
 
@@ -214,7 +225,7 @@
      [\????dropshadow:layer]
      [\c!hoffset=\d_dropshadow_x, \c!voffset=\d_dropshadow_y]
      [\c!offset=\v!overlay,\c!strut=no,\c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:shadowframe]%
-      {\externalfigure[{\currentshadowname}]}}
+     {\externalfigure[{\currentshadowname}]}}
   
 \unexpanded\def\dropshadow_setlayerframed#content%
   {\setlayerframed[\????dropshadow:layer][]
@@ -234,14 +245,13 @@
 \unexpanded\def\usedropshadow#name#content%
     {\bgroup
       \edef\currentdropshadow{#name}%
-      \setbox\b_dropshadow\vbox{#content}%
+      \setbox\b_dropshadow\vbox{\inheriteddropshadowframed{#content}}%
       \initializedropshadow
+      \dropshadow_calculateoffets
       \doifnot{\dropshadowparameter\c!state}\v!stop
-        {\dropshadow_calculateoffets
-         \dropshadow_processshadow
-         \dropshadow_setlayerframed{#content}%
-         \tightlayer[\????dropshadow:layer]%
-        }
+           {\dropshadow_processshadow}
+      \setlayer[\????dropshadow:layer]{\copy\b_dropshadow}%
+      \tightlayer[\????dropshadow:layer]%
      \egroup}
 
 \appendtoks
