@@ -98,6 +98,7 @@
   [   \c!type=module,
       \c!name=dropshadow,
    \c!command=\v!yes,
+     \c!frame=\v!yes,
         setup=\v!list,
        \c!set=\v!yes,
      \c!style=\v!no,
@@ -106,9 +107,10 @@
 
 \setupdropshadow
   [
+                    \c!align={\v!middle,\v!lohi}, % needed for background color
                \c!background=\v!color,% \framed parameter
           \c!backgroundcolor=white,% \framed parameter
-         \c!backgroundradius=\dropshadowparameter\c!radius,
+           \c!corner=\v!round,
                \c!colorspace=,% derived from shadowcolor, overriding is possible
                 \c!direction=-45,
                \c!fileformat=png,
@@ -129,12 +131,9 @@
                 \c!udistance=0mm,
                     \c!umbra=50,
                    \c!usigma=0.85mm, % 5px@150ppi
-%                    \c!width=\overlaywidth,
-%                   \c!height=\overlayheight,
   ]
 
 % Helper macros
-\def\numberofpixels#1{\the\numexpr\dimexpr#1\relax/\pxdimen\relax}
 \def\dropshadowpixels#1{\the\numexpr\dimexpr\dropshadowparameter{#1}\relax/\pxdimen\relax}
 \def\dropshadowdimension#1{\the\dimexpr\dropshadowparameter{#1}\relax}
 
@@ -143,21 +142,6 @@
 \newdimen\d_dropshadow_y
 \let\p_dropshadow_wd\relax
 \let\p_dropshadow_ht\relax
-
-\defineframed
-  [inheriteddropshadowframed]
-  [
-    \c!frame=\v!on,
-    \c!width=\dropshadowparameter\c!width,
-    \c!height=\dropshadowparameter\c!height,
-    \c!radius=\dropshadowpixels\c!radius px,
-    \c!corner=\v!round, %\ifdimen\dropshadowpixels\c!radius px\relax>\zeropoint \v!round\else\v!rectangular\fi,
-    \c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:objectframe,
-    \c!backgroundcolor=\dropshadowparameter\c!backgroundcolor,
-    \c!background=\dropshadowparameter\c!background,
-    \c!offset=\v!overlay,\c!align={\v!middle,\v!lohi}, % needed for background color
-  ]
-
 
 \definelayer[\????dropshadow:layer]
 
@@ -168,18 +152,20 @@
       {\setexpandeddropshadowparameter\c!width{\the\wd\b_dropshadow}}
   \doifnothing{\dropshadowparameter\c!height}
       {\setexpandeddropshadowparameter\c!height{\the\dimexpr\ht\b_dropshadow+\dp\b_dropshadow\relax}}
-  \edef\p_dropshadow_wd{\numberofpixels{\the\wd\b_dropshadow}}
-  \edef\p_dropshadow_ht{\numberofpixels{\the\ht\b_dropshadow}}
+  \edef\p_dropshadow_wd{\the\wd\b_dropshadow}
+  \edef\p_dropshadow_ht{\the\ht\b_dropshadow}
   \doifnothing{\dropshadowparameter\c!mppath}
       % create a path using the default graphic template
-     {\setbox\scratchbox\hbox{\dropscreatedefaultpath{\the\numexpr\dropshadowparameter\c!width}{\the\numexpr\dropshadowparameter\c!height}{\the\numexpr\dropshadowparameter\c!radius}}}%
+      % FIXME: This can be simplified at the lua end by assuming that
+      % everything is in px. 
+     {\setbox\scratchbox\hbox{\dropscreatedefaultpath{\p_dropshadow_wd}{\p_dropshadow_ht}{\the\numexpr\dropshadowparameter\c!radius}}}%
 
   \setuplayer[\????dropshadow:layer]
              [
                \c!corner=\v!middle,
                \c!location=\v!middle,
-               \c!height=\p_dropshadow_ht px,
-               \c!width=\p_dropshadow_wd px,
+               \c!height=\p_dropshadow_ht,
+               \c!width=\p_dropshadow_wd,
              ]
 \stoptexdefinition
 
@@ -201,8 +187,8 @@
      c.setup     = \!!bs\dropshadowparameter\c!setup\!!es
 
      local spec = {
-                         width = \!!bs\dropshadowdimension\c!width\!!es,
-                        height = \!!bs\dropshadowdimension\c!height\!!es,
+                         width = \!!bs\p_dropshadow_wd\!!es,
+                        height = \!!bs\p_dropshadow_ht\!!es,
                         radius = \!!bs\dropshadowdimension\c!radius\!!es,
                         psigma = \!!bs\dropshadowpixels\c!psigma\!!es,
                         usigma = \!!bs\dropshadowpixels\c!usigma\!!es,
@@ -227,25 +213,12 @@
      [\c!offset=\v!overlay,\c!strut=no,\c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:shadowframe]%
      {\externalfigure[{\currentshadowname}]}}
   
-\unexpanded\def\dropshadow_setlayerframed#content%
-  {\setlayerframed[\????dropshadow:layer][]
-      [\c!width=\dropshadowpixels\c!width px,
-       \c!height=\dropshadowpixels\c!height px,
-       \c!radius=\dropshadowpixels\c!radius px,
-       \c!backgroundradius=\dropshadowpixels\c!radius px,
-       \c!frameradius=\dropshadowpixels\c!radius px,
-       \c!corner=\v!round, %\ifdimen\dropshadowpixels\c!radius px\relax>\zeropoint \v!round\else\v!rectangular\fi,
-       \c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:objectframe,
-       \c!backgroundcolor=\dropshadowparameter\c!backgroundcolor,
-       \c!background=\dropshadowparameter\c!background,
-       \c!offset=\v!overlay,\c!align={\v!middle,\v!lohi}, % needed for background color
-       %#2
-     ]{#content}}
-
 \unexpanded\def\usedropshadow#name#content%
     {\bgroup
       \edef\currentdropshadow{#name}%
-      \setbox\b_dropshadow\vbox{\inheriteddropshadowframed{#content}}%
+      \setbox\b_dropshadow\vbox
+            {\setupcurrentdropshadow[\c!offset=\v!overlay]% For framed
+             \inheriteddropshadowframed{#content}}%
       \initializedropshadow
       \dropshadow_calculateoffets
       \doifnot{\dropshadowparameter\c!state}\v!stop
@@ -258,6 +231,7 @@
   \expanded{\defineoverlay[\currentdropshadow][\usedropshadow{\currentdropshadow}{}]}
 \to \everydefinedropshadow
 
+% FIXME: Check if this table works correctly.
 \unexpanded\def\showdropshadowtable{\ctxlua{thirddata.drops.showdropstable()}}% show main parameters in a small table
 
 % D load some presets
