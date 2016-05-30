@@ -11,7 +11,7 @@
 % \setinterfaceconstant {file}                    {file}
   \setinterfaceconstant {fileformat}              {fileformat}
   \setinterfaceconstant {mppath}                  {mppath}
-% \setinterfaceconstant {offset}                  {offset}
+  \setinterfaceconstant {soffset}                 {soffset}
   \setinterfaceconstant {pdistance}               {pdistance}
   \setinterfaceconstant {penumbra}                {penumbra}
   \setinterfaceconstant {psigma}                  {psigma}
@@ -106,8 +106,7 @@
     {\bgroup
       \edef\currentdropshadow{#name}%
       \setbox\b_dropshadow\vbox
-            {\setupcurrentdropshadow[\c!offset=\v!overlay]% For framed
-             \ifconditional\dropshadowdebug
+            {\ifconditional\dropshadowdebug
                \setupcurrentdropshadow[\c!frame=\v!on, \c!rulethickness=0.1pt, \c!framecolor=dbg:objectframe]%
              \fi
              \inheriteddropshadowframed{#content}}%
@@ -144,7 +143,7 @@
 
 \def\dropshadow_calculateoffets
     {\ctxlua{thirddata.drops.locateshadow("\dropshadowparameter\c!direction", 
-                                          "\dropshadowparameter\c!offset",
+                                          "\dropshadowparameter\c!soffset",
                                           "\dropshadowparameter\c!rotation",
                                           "\dropshadowparameter{shiftx}",
                                           "\dropshadowparameter{shifty}")}}
@@ -152,7 +151,7 @@
 \unexpanded\def\dropshadow_processshadow
   {\startluacode
      local c = thirddata.drops.parameters.current
-     c.offset    = \!!bs\dropshadowpixels\c!offset\!!es
+     c.offset    = \!!bs\dropshadowpixels\c!soffset\!!es
      c.xoffset   = \!!bs\the\numexpr\d_dropshadow_x\!!es
      c.yoffset   = \!!bs\the\numexpr\d_dropshadow_y\!!es
      c.direction = \!!bs\dropshadowparameter\c!direction\!!es
@@ -214,7 +213,8 @@
                 \c!direction=-45,
                \c!fileformat=png,
                    \c!mppath=,
-                   \c!offset=1.69mm, % 10px@150ppi
+                  \c!soffset=\v!overlay,
+                  \c!soffset=1.69mm, % 10px@150ppi
                 \c!pdistance=0.51mm, % 3px@150ppi
                  \c!penumbra=40,
                    \c!psigma=1.52mm, % 9px@150ppi
@@ -232,16 +232,91 @@
   ]
 
 
-% D load some presets
-% \usemodule[t-drops-setups]
+% Some preset shadows
+%
+% S O F T
+%
+% gives smooth shadows (higher sigma values); good for bigger shadow offsets
+% based on a black shadow, white background (paper) and white frame (\photoframed).
+% the white frame is needed to get reliable contrasts; it totally depends on the graphic otherwise
 
 \definedropshadow
     [soft:light]
     [umbra=35,penumbra=30,usigma=0.68mm,psigma=1.35mm]
 
 \definedropshadow
+    [soft:medium]
+    [umbra=50,penumbra=40,usigma=0.85mm,psigma=1.52mm]
+
+\definedropshadow
+    [soft:dark]
+    [umbra=65,penumbra=50,usigma=1.02mm,psigma=1.86mm]
+
+% H A R D
+%
+% small 'usigma' value results in a harder contrast between umbra and penumbra area
+%
+
+
+\definedropshadow
     [hard:light]
     [umbra=35,penumbra=30,usigma=0.17mm,psigma=1.35mm]
+
+\definedropshadow
+    [hard:medium]
+    [umbra=50,penumbra=40,usigma=0.34mm,psigma=1.69mm]
+
+\definedropshadow
+    [hard:dark]
+    [umbra=65,penumbra=50,usigma=0.51mm,psigma=1.86mm]
+
+% F L A T
+%
+% Allows you to produce shadows with minimal 'distance' to the background (paper).
+% None or very small umbra sigma for a hard contrast and small umbra shadow.
+% Umbra shadow is smaller than object (negative udistance).
+%
+% #suggested settings
+% one sided (here 270°): direction=-90, offset=0.87mm, udistance=-0.34mm, pdistance=0mm
+% two sided (here -45°) : direction=-45, offset=0.95mm, udistance=-0.34mm, pdistance=0mm
+%
+% For a more realistic look we probably need a higher resolution (thinner shadow lines possible) than 150ppi.
+% Also better use 'azure:V20' instead of black as shadowcolor.
+
+\definedropshadow
+    [flat:light]
+    [umbra=35,penumbra=30,usigma=0mm,psigma=1.19mm]
+
+\definedropshadow
+    [flat:medium]
+    [umbra=50,penumbra=35,usigma=0mm,psigma=1.35mm]
+
+\definedropshadow
+    [flat:dark]
+    [umbra=65,penumbra=40,usigma=0mm,psigma=1.52mm]
+
+
+% F R A M E S - - - - - - - -
+% offset is always sero; direction has no function and is also reset to zero
+
+
+% G L O O M
+%
+% for darker backgrounds
+\definedropshadow
+    [frame:gloom]
+    [umbra=80,penumbra=70,usigma=0.34mm,psigma=2.03mm, udistance=0.7mm,pdistance=1.2mm, direction=0,soffset=0mm]
+
+% H A L O
+%
+% for very dark backgrounds
+\definedropshadow
+    [frame:halo]
+    [umbra=100,penumbra=80,usigma=0.34mm,psigma=2.03mm, udistance=0.7mm,pdistance=1.2mm, direction=0,soffset=0mm]
+
+
+
+
 
 \protect
 \stopmodule

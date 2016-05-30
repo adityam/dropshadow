@@ -1,6 +1,20 @@
 \usemodule[dropshadow]
 
-\definedropshadow[softshadow][soft:light][frame=on, corner=round,  radius=3mm]
+\setupexternalfigures
+    [location={local,global,default}]
+\definedropshadow[softshadow][soft:light][frame=on, corner=round, direction=135,radius=3mm]
+
+\definedropshadow
+      [blackboard]
+      [flatdark]
+      [
+        frame=on,
+        rulethickness=8bp,
+        framecolor=white,
+        backgroundcolor=gray,
+        offset=10bp,
+        strut=no,
+      ]
 
 \starttext
 \usedropshadow{softshadow}{\framed[width=3cm, height=2cm, frame=off]{Frame 1}}
@@ -11,6 +25,29 @@
 \framed[background=softshadow, frame=off, offset=4mm]{This is a test}
 \framed[background=hard:light, frame=off, offset=4mm]{This is a test}
 
+\usedropshadow{blackboard}{\externalfigure[cow]}
+
+\usedropshadow{blackboard}{\showdropshadowtable}
+\blank[4*line]
+\showdropshadowtable
+
+\startTABLE[frame=off, offset=1cm]
+  \NC 
+      \framed[background=softshadow, frame=off, offset=4mm]{This is a test}
+  \NC 
+      \framed[background=hard:light, frame=off, offset=4mm]{This is a test}
+  \NC \NR
+\stopTABLE
+
+\startTABLE[frame=off, offset=1cm, background=soft:light]
+  \NC A \NC B \NC C \NC \NR
+  \NC A \NC B \NC C \NC \NR
+  \NC A \NC B \NC C \NC \NR
+  \NC A \NC B \NC C \NC \NR
+\stopTABLE
+
+
+\showdropshadowboxes
 \setupdropshadow[softshadow][radius=0mm]
 
 \blank[4*line]

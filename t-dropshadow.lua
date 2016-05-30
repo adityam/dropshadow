@@ -41,7 +41,7 @@ local fallback = {
                 direction = "-45",
                fileformat = "png",
                    mppath = "",
-                   offset = "1.69mm", -- 10px@150ppi
+                   soffset = "1.69mm", -- 10px@150ppi
                 pdistance = "0.51mm", -- 3px@150ppi
                  penumbra = "40",
                    psigma = "1.52mm", -- 9px@150ppi
@@ -68,7 +68,7 @@ drops.parameters.current  = {
                 direction = -45,
                fileformat = "png",
                    mppath = "",
-                   offset = "1.69mm",
+                   soffset = "1.69mm",
                 pdistance = "0.51mm",
                  penumbra = 40,
                    psigma = 9,
@@ -165,7 +165,7 @@ function drops.spec()
         id        = c.shadow_id, name     = c.shadow_name,
         umbra     = c.umbra    , usigma   = c.usigma,   udistance = c.udistance,
         penumbra  = c.penumbra , psigma   = c.psigma,   pdistance = c.pdistance,
-        offset    = c.offset   , xoffset  = c.xoffset , yoffset   = c.yoffset,
+        soffset    = c.soffset   , xoffset  = c.xoffset , yoffset   = c.yoffset,
         direction = c.direction, rotation = c.rotation,
         resolution = c.resolution,
         shadowcolor = c.shadowcolor,
@@ -208,7 +208,7 @@ function drops.showdropstable()
     NC()
     context("\\hbox\\bgroup\\switchtobodyfont[4pt]location rel.\\egroup")VL()
     context("direction")NC()
-    context("offset")NC()
+    context("soffset")NC()
     context("xy-offset (px)")
     AR()HL()
 
@@ -216,7 +216,7 @@ function drops.showdropstable()
     context("value")
     VL()
     context(format("%d°",c.direction))NC()
-    context(format("%.1fpx",numberofpixels(c.offset,1)))NC()
+    context(format("%.1fpx",numberofpixels(c.soffset,1)))NC()
     context(format("%+.1f%+.1f",c.xoffset/px,c.yoffset/px))
     AR()
 
@@ -324,6 +324,7 @@ if not drops.im_version then
 if drops.im_version == IM_NO_VERSIONNUMBER then context("\\dropsoff") end -- no working IM, no drops
 
 
+-- AM: Why not save this in the tuc file?
 local function save_hash() -- at every \bye (see batch_control() )
     -- check directory structure
     local absolute_shadowpath = lfs.currentdir() .. dir_separator .. shadowdir
@@ -417,10 +418,10 @@ end
 
 
 -- no need to force the usage of full pixel for the offset
-function drops.locateshadow(angle,offset,rotation,shiftx,shifty)
+function drops.locateshadow(angle,soffset,rotation,shiftx,shifty)
     local a,o,sx,sy,x,y
     a = rad(tonumber(angle) - tonumber(rotation))
-    o = todimen(offset)
+    o = todimen(soffset)
     sx = tonumber(shiftx)*65536
     sy = tonumber(shifty)*65536
     x,y = cos(a)*o+sx, sin(a)*o-sy
