@@ -1,0 +1,20 @@
+\usemodule[dropshadow]
+
+\definedropshadow[softshadow][soft:light][frame=on, corner=round,  radius=3mm]
+
+\starttext
+\usedropshadow{softshadow}{\framed[width=3cm, height=2cm, frame=off]{Frame 1}}
+
+\blank[4*line]
+
+\dontleavehmode
+\framed[background=softshadow, frame=off, offset=4mm]{This is a test}
+\framed[background=hard:light, frame=off, offset=4mm]{This is a test}
+
+\setupdropshadow[softshadow][radius=0mm]
+
+\blank[4*line]
+
+\framed[background=softshadow, frame=off, offset=4mm]{This is a test}
+
+\stoptext
