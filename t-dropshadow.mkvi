@@ -18,7 +18,6 @@
 % \setinterfaceconstant {radius}                  {radius}
   \setinterfaceconstant {resolution}              {resolution}
 % \setinterfaceconstant {rotation}                {rotation}
-  \setinterfaceconstant {setup}                   {setup}
   \setinterfaceconstant {shadowbackgroundcolor}   {shadowbackgroundcolor}
   \setinterfaceconstant {shadowcolor}             {shadowcolor}
   \setinterfaceconstant {udistance}               {udistance}
@@ -115,7 +114,7 @@
       \initializedropshadow
       \dropshadow_calculateoffets
       \doifnot{\dropshadowparameter\c!state}\v!stop
-           {\dropshadow_processshadow}
+           {\iftrialtypesetting\else\dropshadow_processshadow\fi}
       \setlayer[\????dropshadow:layer]{\box\b_dropshadow}%
       \tightlayer[\????dropshadow:layer]%
      \egroup}
@@ -158,7 +157,6 @@
      c.yoffset   = \!!bs\the\numexpr\d_dropshadow_y\!!es
      c.direction = \!!bs\dropshadowparameter\c!direction\!!es
      c.rotation  = \!!bs\dropshadowparameter\c!rotation\!!es
-     c.setup     = \!!bs\dropshadowparameter\c!setup\!!es
 
      local spec = {
                          width = \!!bs\p_dropshadow_wd\!!es,
@@ -223,7 +221,6 @@
                   \c!radius=\the\dimexpr0.5\bodyfontsize\relax,
                \c!resolution=150,% in ppi (pixel per inch)
                  \c!rotation=0,
-                    \c!setup=,% no setup in the defaults; never
                     \c!state=\v!start,
     \c!shadowbackgroundcolor=white,
               \c!shadowcolor=black,

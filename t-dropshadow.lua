@@ -48,7 +48,6 @@ local fallback = {
                    radius = "0mm", -- boxshadow only
                resolution = "150",-- in ppi (pixel per inch)
                  rotation = "0",
-                    setup = "",-- no setup in the defaults; never
     shadowbackgroundcolor = "white",
               shadowcolor = "black",
                 udistance = "0mm",
@@ -172,7 +171,6 @@ function drops.spec()
         shadowcolor = c.shadowcolor,
         shadowbackgroundcolor = c.shadowbackgroundcolor,
         colorspace = c.colorspace,
-        setup = c.setup
     }
 end
 
