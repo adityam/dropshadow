@@ -107,10 +107,9 @@
 
 \setupdropshadow
   [
-                    \c!align={\v!middle,\v!lohi}, % needed for background color
+                    \c!align={\v!middle,\v!lohi}, % \framed parameter, needed for background color
                \c!background=\v!color,% \framed parameter
           \c!backgroundcolor=white,% \framed parameter
-           \c!corner=\v!round,
                \c!colorspace=,% derived from shadowcolor, overriding is possible
                 \c!direction=-45,
                \c!fileformat=png,
@@ -119,7 +118,7 @@
                 \c!pdistance=0.51mm, % 3px@150ppi
                  \c!penumbra=40,
                    \c!psigma=1.52mm, % 9px@150ppi
-                   \c!radius=0pt, % boxshadow only
+                  \c!radius=\the\dimexpr0.5\bodyfontsize\relax,
                \c!resolution=150,% in ppi (pixel per inch)
                  \c!rotation=0,
                     \c!setup=,% no setup in the defaults; never
@@ -148,10 +147,6 @@
 \starttexdefinition initializedropshadow
   \pxdimen=1in\relax
   \divide\pxdimen\numexpr\dropshadowparameter\c!resolution%
-  \doifnothing{\dropshadowparameter\c!width}
-      {\setexpandeddropshadowparameter\c!width{\the\wd\b_dropshadow}}
-  \doifnothing{\dropshadowparameter\c!height}
-      {\setexpandeddropshadowparameter\c!height{\the\dimexpr\ht\b_dropshadow+\dp\b_dropshadow\relax}}
   \edef\p_dropshadow_wd{\the\wd\b_dropshadow}
   \edef\p_dropshadow_ht{\the\ht\b_dropshadow}
   \doifnothing{\dropshadowparameter\c!mppath}
@@ -223,12 +218,15 @@
       \dropshadow_calculateoffets
       \doifnot{\dropshadowparameter\c!state}\v!stop
            {\dropshadow_processshadow}
-      \setlayer[\????dropshadow:layer]{\copy\b_dropshadow}%
+      \setlayer[\????dropshadow:layer]{\box\b_dropshadow}%
       \tightlayer[\????dropshadow:layer]%
      \egroup}
 
 \appendtoks
-  \expanded{\defineoverlay[\currentdropshadow][\usedropshadow{\currentdropshadow}{}]}
+  \expanded{\defineoverlay
+              [\currentdropshadow]
+              [{\setupdropshadow[\currentdropshadow][\c!width=\noexpand\overlaywidth, \c!height=\noexpand\overlayheight, \c!empty=\v!yes]%
+                \usedropshadow{\currentdropshadow}{}}]}
 \to \everydefinedropshadow
 
 % FIXME: Check if this table works correctly.
