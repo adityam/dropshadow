@@ -108,6 +108,9 @@
       \edef\currentdropshadow{#name}%
       \setbox\b_dropshadow\vbox
             {\setupcurrentdropshadow[\c!offset=\v!overlay]% For framed
+             \ifconditional\dropshadowdebug
+               \setupcurrentdropshadow[\c!frame=\v!on, \c!rulethickness=0.1pt, \c!framecolor=dbg:objectframe]%
+             \fi
              \inheriteddropshadowframed{#content}}%
       \initializedropshadow
       \dropshadow_calculateoffets
@@ -129,6 +132,8 @@
       % everything is in px. 
      {\setbox\scratchbox\hbox{\dropscreatedefaultpath{\p_dropshadow_wd}{\p_dropshadow_ht}{\the\numexpr\dropshadowparameter\c!radius}}}%
 
+  \edef\p_dropshadow_frame{\ifconditional\dropshadowdebug\v!on\else\v!off\fi}
+  
   \setuplayer[\????dropshadow:layer]
              [
                \c!corner=\v!middle,
@@ -179,7 +184,7 @@
    \setlayerframed
      [\????dropshadow:layer]
      [\c!hoffset=\d_dropshadow_x, \c!voffset=\d_dropshadow_y]
-     [\c!offset=\v!overlay,\c!strut=no,\c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:shadowframe]%
+     [\c!offset=\v!overlay,\c!strut=no,\c!frame=\p_dropshadow_frame,\c!rulethickness=0.1pt,\c!framecolor=dbg:shadowframe]%
      {\externalfigure[{\currentshadowname}]}}
 
 %D Boolean
