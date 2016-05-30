@@ -1,6 +1,8 @@
 \startmodule[dropshadow]
 \unprotect
 
+\ctxloadluafile{t-dropshadow}{}
+
 \startinterface all
 % \setinterfaceconstant {background}              {background}
 % \setinterfaceconstant {backgroundcolor}         {backgroundcolor}
@@ -47,52 +49,6 @@
   \setinterfacemessage\m!drops {wrongumbra}      {warning: invalid umbra value '--'; setting to default value}
 \stopinterface
 
-%D Boolean
-
-\newif\if!!dropsdo
-\newif\if!!dropson
-
-%D Tracing & Control
-%D
-%D add '--trackers=modules.dropshadow' to your command line, to get additional info
-
-% D create new shadows if neeeded
-\let\dropsdo\!!dropsdotrue
-% D no creation, only inclusion of existing shadow graphics
-\let\dropsdone\!!dropsdofalse
-
-\dropsdo
-
-%D The default parameter values are stored on the Lua side.
-
-% Misc
-% colors used for visual debugging
-\definecolor[dbg:shadowframe] [r=.933333,g=.388235,b=.388235] % red2
-\definecolor[dbg:objectframe] [g=.803922] % green3
-%D shows frame for box and box shadow boundaries
-\def\dropsshowframes{\def\DBG@frame{\v!on}}
-\def\dropshideframes{\def\DBG@frame{\v!off}}
-
-\dropshideframes
-
-%D relative path / file name
-\def\currentshadowname{\ctxlua{thirddata.drops.currentshadowname()}}
-%D shadow ID; used internally for caching, but maybe useful, as it contains all graphic related parameters
-\def\currentshadowid{\ctxlua{thirddata.drops.currentshadowid()}}
-
-\def\dropscreatedefaultpath#1#2#3{\ctxlua{context(thirddata.drops.createboxshadowpath(\!!bs#1\!!es,\!!bs#2\!!es,\!!bs#3\!!es))}}
-
-
-\unexpanded\def\!!dropscontrol
-  {\if!!dropsdo\ctxlua{thirddata.drops.batch_control()}\fi}
-
-\appendtoks\!!dropscontrol\to\everybye
-
-% ---------- Modified module
-
-%D Lua code
-\ctxloadluafile{t-dropshadow}{}
-
 \definenamespace
   [dropshadow]
   [   \c!type=module,
@@ -105,44 +61,62 @@
     \s!parent=dropshadow,
   ]
 
-\setupdropshadow
-  [
-                    \c!align={\v!middle,\v!lohi}, % \framed parameter, needed for background color
-               \c!background=\v!color,% \framed parameter
-          \c!backgroundcolor=white,% \framed parameter
-               \c!colorspace=,% derived from shadowcolor, overriding is possible
-                \c!direction=-45,
-               \c!fileformat=png,
-                   \c!mppath=,
-                   \c!offset=1.69mm, % 10px@150ppi
-                \c!pdistance=0.51mm, % 3px@150ppi
-                 \c!penumbra=40,
-                   \c!psigma=1.52mm, % 9px@150ppi
-                  \c!radius=\the\dimexpr0.5\bodyfontsize\relax,
-               \c!resolution=150,% in ppi (pixel per inch)
-                 \c!rotation=0,
-                    \c!setup=,% no setup in the defaults; never
-                    \c!state=\v!start,
-    \c!shadowbackgroundcolor=white,
-              \c!shadowcolor=black,
-                      shiftx=0,
-                      shifty=0,
-                \c!udistance=0mm,
-                    \c!umbra=50,
-                   \c!usigma=0.85mm, % 5px@150ppi
-  ]
+\appendtoks
+  \expanded{\defineoverlay
+              [\currentdropshadow]
+              [{\setupdropshadow[\currentdropshadow][\c!width=\noexpand\overlaywidth, \c!height=\noexpand\overlayheight, \c!empty=\v!yes]%
+                \usedropshadow{\currentdropshadow}{}}]}
+\to \everydefinedropshadow
+
 
 % Helper macros
 \def\dropshadowpixels#1{\the\numexpr\dimexpr\dropshadowparameter{#1}\relax/\pxdimen\relax}
 \def\dropshadowdimension#1{\the\dimexpr\dropshadowparameter{#1}\relax}
+%
+%D relative path / file name
+\def\currentshadowname{\ctxlua{thirddata.drops.currentshadowname()}}
 
-\newbox\b_dropshadow
-\newdimen\d_dropshadow_x
-\newdimen\d_dropshadow_y
+%D shadow ID; used internally for caching, but maybe useful, as it contains all graphic related parameters
+\def\currentshadowid{\ctxlua{thirddata.drops.currentshadowid()}}
+
+\def\dropscreatedefaultpath#1#2#3{\ctxlua{context(thirddata.drops.createboxshadowpath(\!!bs#1\!!es,\!!bs#2\!!es,\!!bs#3\!!es))}}
+
+\newbox   \b_dropshadow
+\newdimen \d_dropshadow_x
+\newdimen \d_dropshadow_y
 \let\p_dropshadow_wd\relax
 \let\p_dropshadow_ht\relax
+\let\p_dropshadow_frame\relax
 
 \definelayer[\????dropshadow:layer]
+
+%D Tracing & Control
+%D
+%D add '--trackers=modules.dropshadow' to your command line, to get additional info
+
+\newconditional\dropshadowdebug \setfalse\dropshadowdebug
+
+\def\showdropshadowboxes{\settrue\dropshadowdebug}
+\def\dontshowdropshadowboxes{\setfalse\dropshadowdebug}
+
+% colors used for visual debugging
+\definecolor[dbg:shadowframe] [r=.933333,g=.388235,b=.388235] % red2
+\definecolor[dbg:objectframe] [g=.803922] % green3
+
+\unexpanded\def\usedropshadow#name#content%
+    {\bgroup
+      \edef\currentdropshadow{#name}%
+      \setbox\b_dropshadow\vbox
+            {\setupcurrentdropshadow[\c!offset=\v!overlay]% For framed
+             \inheriteddropshadowframed{#content}}%
+      \initializedropshadow
+      \dropshadow_calculateoffets
+      \doifnot{\dropshadowparameter\c!state}\v!stop
+           {\dropshadow_processshadow}
+      \setlayer[\????dropshadow:layer]{\box\b_dropshadow}%
+      \tightlayer[\????dropshadow:layer]%
+     \egroup}
+
 
 \starttexdefinition initializedropshadow
   \pxdimen=1in\relax
@@ -207,30 +181,54 @@
      [\c!hoffset=\d_dropshadow_x, \c!voffset=\d_dropshadow_y]
      [\c!offset=\v!overlay,\c!strut=no,\c!frame=\DBG@frame,\c!rulethickness=.1pt,\c!framecolor=dbg:shadowframe]%
      {\externalfigure[{\currentshadowname}]}}
+
+%D Boolean
+
+\newif\if!!dropsdo
+
+% D create new shadows if neeeded
+\let\dropsdo\!!dropsdotrue
+% D no creation, only inclusion of existing shadow graphics
+\let\dropsdone\!!dropsdofalse
+
+\dropsdo
+
+
+\unexpanded\def\!!dropscontrol
+  {\if!!dropsdo\ctxlua{thirddata.drops.batch_control()}\fi}
+
+\appendtoks\!!dropscontrol\to\everybye
   
-\unexpanded\def\usedropshadow#name#content%
-    {\bgroup
-      \edef\currentdropshadow{#name}%
-      \setbox\b_dropshadow\vbox
-            {\setupcurrentdropshadow[\c!offset=\v!overlay]% For framed
-             \inheriteddropshadowframed{#content}}%
-      \initializedropshadow
-      \dropshadow_calculateoffets
-      \doifnot{\dropshadowparameter\c!state}\v!stop
-           {\dropshadow_processshadow}
-      \setlayer[\????dropshadow:layer]{\box\b_dropshadow}%
-      \tightlayer[\????dropshadow:layer]%
-     \egroup}
-
-\appendtoks
-  \expanded{\defineoverlay
-              [\currentdropshadow]
-              [{\setupdropshadow[\currentdropshadow][\c!width=\noexpand\overlaywidth, \c!height=\noexpand\overlayheight, \c!empty=\v!yes]%
-                \usedropshadow{\currentdropshadow}{}}]}
-\to \everydefinedropshadow
-
 % FIXME: Check if this table works correctly.
 \unexpanded\def\showdropshadowtable{\ctxlua{thirddata.drops.showdropstable()}}% show main parameters in a small table
+
+\setupdropshadow
+  [
+                    \c!align={\v!middle,\v!lohi}, % \framed parameter, needed for background color
+               \c!background=\v!color,% \framed parameter
+          \c!backgroundcolor=white,% \framed parameter
+               \c!colorspace=,% derived from shadowcolor, overriding is possible
+                \c!direction=-45,
+               \c!fileformat=png,
+                   \c!mppath=,
+                   \c!offset=1.69mm, % 10px@150ppi
+                \c!pdistance=0.51mm, % 3px@150ppi
+                 \c!penumbra=40,
+                   \c!psigma=1.52mm, % 9px@150ppi
+                  \c!radius=\the\dimexpr0.5\bodyfontsize\relax,
+               \c!resolution=150,% in ppi (pixel per inch)
+                 \c!rotation=0,
+                    \c!setup=,% no setup in the defaults; never
+                    \c!state=\v!start,
+    \c!shadowbackgroundcolor=white,
+              \c!shadowcolor=black,
+                      shiftx=0,
+                      shifty=0,
+                \c!udistance=0mm,
+                    \c!umbra=50,
+                   \c!usigma=0.85mm, % 5px@150ppi
+  ]
+
 
 % D load some presets
 % \usemodule[t-drops-setups]
